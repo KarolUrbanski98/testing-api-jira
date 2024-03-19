@@ -17,7 +17,7 @@ public class CreateIssueReq {
         private Project project;
         private String summary;
         private String description;
-        private IssueType issuetype;
+        private Issuetype issuetype;
 
         public Project getProject() {
             return project;
@@ -43,11 +43,11 @@ public class CreateIssueReq {
             this.description = description;
         }
 
-        public IssueType getIssueType() {
+        public Issuetype getIssuetype() {
             return issuetype;
         }
 
-        public void setIssueType(IssueType issuetype) {
+        public void setIssuetype(Issuetype issuetype) {
             this.issuetype = issuetype;
         }
 

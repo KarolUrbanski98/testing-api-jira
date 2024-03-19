@@ -1,6 +1,6 @@
 package pl.urbanski;
 
-public class IssueType {
+public class Issuetype {
     private String id;
 
     public String getId() {

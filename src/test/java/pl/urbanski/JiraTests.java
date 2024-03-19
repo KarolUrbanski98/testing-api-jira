@@ -33,19 +33,73 @@ public class JiraTests {
         CreateIssueReq createIssueReq = new CreateIssueReq();
         CreateIssueReq.Fields fields = new CreateIssueReq.Fields();
         Project project = new Project();
-        IssueType issueType = new IssueType();
+        Issuetype issuetype = new Issuetype();
 
         project.setKey("APT");
-        issueType.setId("10005");
-
         fields.setProject(project);
+
+        /*
+        issue types:
+            10001 - Epic
+            10002 - Story
+            10003 - Task
+            10005 - Bug
+         */
+
+        issuetype.setId("10005");
+        fields.setIssuetype(issuetype);
+
         fields.setSummary("Something's wrong");
         fields.setDescription("Very wrong");
-        fields.setIssueType(issueType);
 
         createIssueReq.setFields(fields);
 
         request.body(createIssueReq).when().post("/rest/api/2/issue")
                 .then().log().all().assertThat().statusCode(201);
+    }
+
+    @Test
+    public void testDeletingIssue() {
+        String issueId = "10005";
+
+        request.pathParam("issueId", issueId)
+                .when().delete("/rest/api/2/issue/{issueId}")
+                .then().log().all().assertThat().statusCode(204);
+    }
+
+    @Test
+    public void testAddingComment() {
+        String issueId = "10015";
+        String expectedMessage = "Hi! Adding a comment.";
+        CommentReq commentReq = new CommentReq();
+        Visibility visibility = new Visibility();
+
+        visibility.setType("role");
+        visibility.setValue("Administrators");
+        commentReq.setVisibility(visibility);
+
+        commentReq.setBody(expectedMessage);
+
+        request.pathParam("issueId", issueId).body(commentReq)
+                .when().post("/rest/api/2/issue/{issueId}/comment")
+                .then().log().all().assertThat().statusCode(201);
+    }
+
+    @Test
+    public void testUpdatingComment() {
+        String issueId = "10015";
+        String commentId = "10005";
+        CommentReq commentReq = new CommentReq();
+        Visibility visibility = new Visibility();
+
+        visibility.setType("role");
+        visibility.setValue("Administrators");
+        commentReq.setVisibility(visibility);
+
+        commentReq.setBody("Updating the comment.");
+
+        request.pathParam("issueId", issueId).pathParam("commentId", commentId).body(commentReq)
+                .when().put("/rest/api/2/issue/{issueId}/comment/{commentId}")
+                .then().log().all().assertThat().statusCode(200);
     }
 }
