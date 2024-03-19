@@ -41,13 +41,11 @@ public class JiraTests {
         fields.setProject(project);
         fields.setSummary("Something's wrong");
         fields.setDescription("Very wrong");
-        fields.setIssuetype(issueType);
+        fields.setIssueType(issueType);
 
         createIssueReq.setFields(fields);
 
-        RequestSpecification reqAddIssue = request.body(createIssueReq);
-
-        reqAddIssue.when().post("/rest/api/2/issue")
+        request.body(createIssueReq).when().post("/rest/api/2/issue")
                 .then().log().all().assertThat().statusCode(201);
     }
 }

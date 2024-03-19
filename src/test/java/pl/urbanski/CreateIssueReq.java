@@ -43,11 +43,11 @@ public class CreateIssueReq {
             this.description = description;
         }
 
-        public IssueType getIssuetype() {
+        public IssueType getIssueType() {
             return issuetype;
         }
 
-        public void setIssuetype(IssueType issuetype) {
+        public void setIssueType(IssueType issuetype) {
             this.issuetype = issuetype;
         }
 
