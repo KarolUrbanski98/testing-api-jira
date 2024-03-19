@@ -3,18 +3,21 @@ package pl.urbanski;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.io.File;
 
 import static io.restassured.RestAssured.given;
 
 public class JiraTests {
 
-    public RequestSpecification request;
+    protected RequestSpecification request_json;
+    protected RequestSpecification request_multipart;
 
-    @BeforeClass
+    @BeforeMethod
     public void loginByCookie() {
-        request = new RequestSpecBuilder().setBaseUri("http://localhost:8080").setContentType(ContentType.JSON).build();
+        RequestSpecification request = new RequestSpecBuilder().setBaseUri("http://localhost:8080").setContentType(ContentType.JSON).build();
 
         AuthCookieReq authCookieReq = new AuthCookieReq();
         authCookieReq.setUsername("karol");
@@ -25,7 +28,8 @@ public class JiraTests {
                 .then().log().all().extract().response().as(AuthCookieRes.class);
 
         String jSessionId = authCookieRes.getSession().getValue();
-        request = given().log().all().spec(request).cookie("JSESSIONID", jSessionId);
+        request_json = given().log().all().spec(request).cookie("JSESSIONID", jSessionId);
+        request_multipart = given().log().all().header("Content-Type", "multipart/form-data").cookie("JSESSIONID", jSessionId);
     }
 
     @Test
@@ -54,7 +58,7 @@ public class JiraTests {
 
         createIssueReq.setFields(fields);
 
-        request.body(createIssueReq).when().post("/rest/api/2/issue")
+        request_json.body(createIssueReq).when().post("/rest/api/2/issue")
                 .then().log().all().assertThat().statusCode(201);
     }
 
@@ -62,7 +66,7 @@ public class JiraTests {
     public void testDeletingIssue() {
         String issueId = "10005";
 
-        request.pathParam("issueId", issueId)
+        request_json.pathParam("issueId", issueId)
                 .when().delete("/rest/api/2/issue/{issueId}")
                 .then().log().all().assertThat().statusCode(204);
     }
@@ -80,9 +84,12 @@ public class JiraTests {
 
         commentReq.setBody(expectedMessage);
 
-        request.pathParam("issueId", issueId).body(commentReq)
+        CommentRes commentRes = request_json.pathParam("issueId", issueId).body(commentReq)
                 .when().post("/rest/api/2/issue/{issueId}/comment")
-                .then().log().all().assertThat().statusCode(201);
+                .then().log().all().assertThat().statusCode(201).extract().response().as(CommentRes.class);
+
+        String id = commentRes.getId();
+        System.out.println(id);
     }
 
     @Test
@@ -98,8 +105,27 @@ public class JiraTests {
 
         commentReq.setBody("Updating the comment.");
 
-        request.pathParam("issueId", issueId).pathParam("commentId", commentId).body(commentReq)
-                .when().put("/rest/api/2/issue/{issueId}/comment/{commentId}")
+        request_json
+                .pathParam("issueId", issueId)
+                .pathParam("commentId", commentId).body(commentReq)
+                .when()
+                .put("/rest/api/2/issue/{issueId}/comment/{commentId}")
+                .then()
+                .log().all()
+                .assertThat().statusCode(200);
+    }
+
+
+    @Test
+    public void testAddingAttachmentToIssue() {
+        String issueId = "10015";
+        File file = new File("jira.txt");
+
+
+        request_multipart
+                .header("X-Atlassian-Token", "no-check")
+                .pathParam("issueId", issueId).multiPart("file", file)
+                .when().post("/rest/api/2/issue/{issueId}/attachments")
                 .then().log().all().assertThat().statusCode(200);
     }
 }
